@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Send, Heart, User, Bot, Loader2, Sparkles, Menu, Settings } from 'lucide-react'
+import { Send, Heart, User, Bot, Loader2, Menu, Settings, MessageCircle, Sparkles } from 'lucide-react'
 import type { Message } from '../lib/supabase'
 import { getUserProfile, getRecentMessages, saveMessage, getMemorySummary, saveMemorySummary } from '../lib/memory'
 import { buildSystemPrompt, buildMemorySummary } from '../lib/prompts'
@@ -150,117 +150,125 @@ export default function Chat({ userId }: ChatProps) {
   }
 
   return (
-    <div className="min-h-screen gradient-bg relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl float"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl float" style={{ animationDelay: '1s' }}></div>
-      </div>
-
-      <div className="container mx-auto h-screen flex flex-col relative z-10">
-        {/* Header */}
-        <div className="glass-card border-b border-white border-opacity-20 p-4 slide-up">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white bg-opacity-20 p-2 rounded-full">
-                <Heart className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-3 rounded-xl">
+                <Heart className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">MotivCoach</h1>
-                <p className="text-sm text-white text-opacity-80">Your Personal AI Life Coach</p>
+                <h1 className="text-2xl font-bold text-gray-900">MotivCoach</h1>
+                <p className="text-sm text-gray-600">Your Personal AI Life Coach</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-white">
-              <button className="p-2 rounded-full hover:bg-white hover:bg-opacity-10 focus-ring">
+            <div className="flex items-center space-x-2">
+              <button className="p-3 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900">
                 <Menu className="w-5 h-5" />
               </button>
-              <button className="p-2 rounded-full hover:bg-white hover:bg-opacity-10 focus-ring">
+              <button className="p-3 rounded-xl hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900">
                 <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
+      </header>
 
+      {/* Chat Container */}
+      <div className="max-w-4xl mx-auto h-[calc(100vh-88px)] flex flex-col">
         {/* Messages Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="max-w-4xl mx-auto h-full flex flex-col">
-            <div className="flex-1 overflow-y-auto px-4 py-6">
-              <div className="space-y-6">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex items-start space-x-3 fade-in ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    {message.role === 'assistant' && (
-                      <div className="bg-gradient-to-r from-blue-500 to-green-500 p-2 rounded-full">
-                        <Bot className="w-5 h-5 text-white" />
-                      </div>
-                    )}
-                    
-                    <div
-                      className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                        message.role === 'user'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white shadow-md text-gray-900'
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                    </div>
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          {messages.length === 0 && !isLoading && (
+            <div className="text-center py-16">
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6 rounded-2xl inline-block mb-6">
+                <MessageCircle className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Welcome to MotivCoach!</h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                I'm here to support you on your journey. Share what's on your mind, and let's work together towards your goals.
+              </p>
+            </div>
+          )}
 
-                    {message.role === 'user' && (
-                      <div className="bg-gray-400 p-2 rounded-full">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                    )}
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex items-start space-x-4 ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+              >
+                {message.role === 'assistant' && (
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-3 rounded-xl flex-shrink-0">
+                    <Bot className="w-6 h-6 text-white" />
                   </div>
-                ))}
+                )}
+                
+                <div
+                  className={`max-w-xs lg:max-w-md px-6 py-4 rounded-2xl ${
+                    message.role === 'user'
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-white shadow-md text-gray-900 border border-gray-100'
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {message.content}
+                  </p>
+                </div>
 
-                {isLoading && (
-                  <div className="flex items-start space-x-3 justify-start">
-                    <div className="bg-gradient-to-r from-blue-500 to-green-500 p-2 rounded-full">
-                      <Bot className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="bg-white shadow-md px-4 py-3 rounded-2xl">
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-                        <span className="text-sm text-gray-500">MotivCoach is thinking...</span>
-                      </div>
-                    </div>
+                {message.role === 'user' && (
+                  <div className="bg-gray-400 p-3 rounded-xl flex-shrink-0">
+                    <User className="w-6 h-6 text-white" />
                   </div>
                 )}
               </div>
-              <div ref={messagesEndRef} />
-            </div>
+            ))}
 
-            {/* Input Area */}
-            <div className="border-t bg-white p-4">
-              <div className="flex items-end space-x-2">
-                <div className="flex-1">
-                  <textarea
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    ref={textareaRef}
-                    placeholder="Share what's on your mind..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={1}
-                    style={{ minHeight: '48px', maxHeight: '120px' }}
-                  />
+            {isLoading && (
+              <div className="flex items-start space-x-4 justify-start">
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-3 rounded-xl">
+                  <Bot className="w-6 h-6 text-white" />
                 </div>
-                <button
-                  onClick={sendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="bg-gradient-to-r from-blue-500 to-green-500 text-white p-3 rounded-2xl hover:from-blue-600 hover:to-green-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+                <div className="bg-white shadow-md px-6 py-4 rounded-2xl border border-gray-100">
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                    <span className="text-sm text-gray-600">MotivCoach is thinking...</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="border-t border-gray-200 bg-white p-6">
+          <div className="flex items-end space-x-4">
+            <div className="flex-1">
+              <textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                ref={textareaRef}
+                placeholder="Share what's on your mind..."
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-gray-50 transition-all duration-200"
+                rows={1}
+                style={{ minHeight: '48px', maxHeight: '120px' }}
+              />
+            </div>
+            <button
+              onClick={sendMessage}
+              disabled={!inputMessage.trim() || isLoading}
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white p-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <Send className="w-6 h-6" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Press Enter to send, Shift + Enter for new line
+          </p>
         </div>
       </div>
     </div>
