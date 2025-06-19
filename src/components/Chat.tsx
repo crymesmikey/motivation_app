@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Send, Heart, User, Bot, Loader2 } from 'lucide-react'
+import { Send, Heart, User, Bot, Loader2, Sparkles, Menu, Settings } from 'lucide-react'
 import type { Message } from '../lib/supabase'
 import { getUserProfile, getRecentMessages, saveMessage, getMemorySummary, saveMemorySummary } from '../lib/memory'
 import { buildSystemPrompt, buildMemorySummary } from '../lib/prompts'
@@ -13,7 +13,9 @@ export default function Chat({ userId }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     loadMessages()
@@ -23,18 +25,33 @@ export default function Chat({ userId }: ChatProps) {
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [inputMessage])
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+    }
   }
 
   const loadMessages = async () => {
     try {
       const existingMessages = await getRecentMessages(userId, 50)
       setMessages(existingMessages)
-      
+
       // Send welcome message if this is the first visit
       if (existingMessages.length === 0) {
-        await sendWelcomeMessage()
+        setTimeout(() => {
+          sendWelcomeMessage()
+        }, 1000)
+      } else {
+        setShowWelcome(false)
       }
     } catch (error) {
       console.error('Error loading messages:', error)
@@ -43,21 +60,19 @@ export default function Chat({ userId }: ChatProps) {
 
   const sendWelcomeMessage = async () => {
     try {
+      setShowWelcome(false)
       const profile = await getUserProfile(userId)
       if (!profile) return
 
       const systemPrompt = buildSystemPrompt(profile, null, [])
       const welcomeMessage = "Hi there! I'm excited to start this journey with you as your personal MotivCoach."
-      
+
       const aiResponse = await generateCoachResponse(systemPrompt, welcomeMessage)
 
-      const [userMessage, assistantMessage] = await Promise.all([
-        saveMessage(userId, 'user', welcomeMessage),
-        saveMessage(userId, 'assistant', aiResponse)
-      ])
+      const assistantMessage = await saveMessage(userId, 'assistant', aiResponse)
 
-      if (userMessage && assistantMessage) {
-        setMessages([userMessage, assistantMessage])
+      if (assistantMessage) {
+        setMessages([assistantMessage])
       }
     } catch (error) {
       console.error('Error sending welcome message:', error)
@@ -135,17 +150,33 @@ export default function Chat({ userId }: ChatProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="container mx-auto h-screen flex flex-col">
+    <div className="min-h-screen gradient-bg relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl float" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="container mx-auto h-screen flex flex-col relative z-10">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b p-4">
-          <div className="max-w-4xl mx-auto flex items-center">
-            <div className="bg-blue-500 p-2 rounded-full mr-4">
-              <Heart className="w-6 h-6 text-white" />
+        <div className="glass-card border-b border-white border-opacity-20 p-4 slide-up">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-white bg-opacity-20 p-2 rounded-full">
+                <Heart className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-white">MotivCoach</h1>
+                <p className="text-sm text-white text-opacity-80">Your Personal AI Life Coach</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">MotivCoach</h1>
-              <p className="text-sm text-gray-600">Your Personal AI Life Coach</p>
+            <div className="flex items-center space-x-2 text-white">
+              <button className="p-2 rounded-full hover:bg-white hover:bg-opacity-10 focus-ring">
+                <Menu className="w-5 h-5" />
+              </button>
+              <button className="p-2 rounded-full hover:bg-white hover:bg-opacity-10 focus-ring">
+                <Settings className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -213,6 +244,7 @@ export default function Chat({ userId }: ChatProps) {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
+                    ref={textareaRef}
                     placeholder="Share what's on your mind..."
                     className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     rows={1}
