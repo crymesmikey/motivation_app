@@ -59,6 +59,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   const handleAnswer = (questionId: string, value: string) => {
     const newAnswers = { ...answers, [questionId]: value }
@@ -73,7 +74,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
-    
+
     try {
       const userId = crypto.randomUUID()
       
@@ -92,7 +93,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       if (error) throw error
 
       localStorage.setItem('motivcoach_user_id', userId)
-      onComplete(userId)
+      setShowToast(true)
+      setTimeout(() => {
+        onComplete(userId)
+      }, 1200)
     } catch (error) {
       console.error('Error saving profile:', error)
       alert('There was an error saving your profile. Please try again.')
@@ -208,6 +212,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           )}
         </div>
       </div>
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg transition-all duration-300">
+          Profile saved! Redirecting...
+        </div>
+      )}
     </div>
   )
 }
