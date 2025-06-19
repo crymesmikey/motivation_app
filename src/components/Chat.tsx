@@ -158,7 +158,7 @@ export default function Chat({ userId }: ChatProps) {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex items-start space-x-3 ${
+                    className={`flex items-start space-x-3 fade-in ${
                       message.role === 'user' ? 'justify-end' : 'justify-start'
                     }`}
                   >
